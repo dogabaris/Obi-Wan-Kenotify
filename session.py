@@ -1,9 +1,30 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify
+from flask.ext.sqlalchemy import SQLAlchemy
 import json as pyjson
+import os
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
+
+db = SQLAlchemy(app)
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True)
+    password = db.Column(db.String(80))
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+
 
 
 @app.route('/')
