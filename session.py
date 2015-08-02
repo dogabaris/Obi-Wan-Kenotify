@@ -77,7 +77,7 @@ def loginjson():
         credentials['username'] = str(escape(credentials['username']))  # lemme escape 'em first
         credentials['password'] = str(escape(credentials['password']))  # and let there be string, god said
 
-        if credentials['username'] and credentials['password'] == 'admin':  # just kiddin'
+        if validate(credentials['username'], credentials['password']) != None:  # just kiddin'
             session['username'] = credentials['username']
             session['password'] = credentials['password']
 
@@ -85,6 +85,10 @@ def loginjson():
 
     return 'not logged in'
 
+
+def validate(username, password):
+    user = User.query.filter_by(username=username, password=password).first()
+    return user
 
 #
 @app.route('/login', methods=['GET', 'POST'])
