@@ -12,21 +12,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'te
 
 db = SQLAlchemy(app)
 
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True)
-    password = db.Column(db.String(80))
-    migrationtest = db.Column(db.String(80), default=None)
-
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def __repr__(self):
-        return '<User %r>' % self.username
-
-
+import models
 
 @app.route('/')
 def index():
@@ -88,7 +74,7 @@ def loginjson():
 
 
 def validate(username, password):
-    user = User.query.filter_by(username=username, password=password).first()
+    user = models.User.query.filter_by(username=username, password=password).first()
     return user
 
 #
