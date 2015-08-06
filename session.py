@@ -7,7 +7,7 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config["JSON_SORT_KEYS"] = True
+app.config["JSON_SORT_KEYS"] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
 
 db = SQLAlchemy(app)
@@ -22,12 +22,19 @@ def index():
     return 'You are not logged in'
 
 
-@app.route('/aq', methods=['POST'])
-def aq():
-    request_string = request.get_json(force=True)
-    data = {"username": str(escape(request_string['username'])), "password": str(escape(request_string['password']))}
+@app.route('/post/create', methods=['GET', 'POST'])
+def post_crate():
+    if 'username' in session:
+        if request.method == 'POST':
+            if request.form['tag']:
+                tags = request.form['tag'].split(' ')
+            data = {'author_id': session['user_id'], 'title': str(escape(request.form['title'])), 'tags': tags,
+                    'content': request.form['body']}
+            return jsonify(data)
 
-    return pyjson.dumps(data)
+        return render_template('createpost.html')
+    else:
+        return 'NOT LOGGED IN'
 
 
 @app.route('/json', methods=['POST'])
@@ -47,15 +54,6 @@ def jst():
 
     return render_template('jst.html')
 
-
-#   testing json methods
-# @app.route('/test', methods=['POST'])
-# def test():
-#     #json_string = json.dump(request.form)
-#
-#     return jsonify(**json.loads(json.htmlsafe_dump(json.loads(request.data))))
-#     #return "%(username)s  %(password)s" % request.form
-
 @app.route('/loginjson', methods=['GET', 'POST'])
 def loginjson():
     if request.method == 'POST':
@@ -64,9 +62,12 @@ def loginjson():
         credentials['username'] = str(escape(credentials['username']))  # lemme escape 'em first
         credentials['password'] = str(escape(credentials['password']))  # and let there be string, god said
 
-        if validate(credentials['username'], credentials['password']) != None:  # just kiddin'
+        user = validate(credentials['username'], credentials['password'])
+
+        if user != None:  # just kiddin'
             session['username'] = credentials['username']
             session['password'] = credentials['password']
+            session['user_id'] = user.id
 
             return redirect(url_for(('index')))
 
@@ -77,7 +78,6 @@ def validate(username, password):
     user = models.User.query.filter_by(username=username, password=password).first()
     return user
 
-#
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
