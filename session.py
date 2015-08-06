@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify
+from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify, flash
 from flask.ext.sqlalchemy import SQLAlchemy
 import json as pyjson
 import os
@@ -14,6 +14,7 @@ db = SQLAlchemy(app)
 
 import models
 
+
 @app.route('/')
 def index():
     if 'username' in session:
@@ -26,10 +27,13 @@ def index():
 def post_crate():
     if 'username' in session:
         if request.method == 'POST':
-            if request.form['tag']:
-                tags = request.form['tag'].split(' ')
-            data = {'author_id': session['user_id'], 'title': str(escape(request.form['title'])), 'tags': tags,
-                    'content': request.form['body']}
+            # TODO: validate data
+
+            data = {'author_id': session['user_id'],
+                    'title': str(escape(request.form['title'])),
+                    'tags': escape(request.form['tag']),
+                    'content': escape(request.form['body'])
+                    }
             return jsonify(data)
 
         return render_template('createpost.html')
@@ -54,6 +58,7 @@ def jst():
 
     return render_template('jst.html')
 
+
 @app.route('/loginjson', methods=['GET', 'POST'])
 def loginjson():
     if request.method == 'POST':
@@ -64,12 +69,15 @@ def loginjson():
 
         user = validate(credentials['username'], credentials['password'])
 
-        if user != None:  # just kiddin'
+        if user is not None:
             session['username'] = credentials['username']
             session['password'] = credentials['password']
             session['user_id'] = user.id
 
-            return redirect(url_for(('index')))
+            data = {"username": str(escape(session['username'])), "password": str(escape(session['password']))}
+
+            return jsonify(data)
+
 
     return 'not logged in'
 
@@ -78,25 +86,21 @@ def validate(username, password):
     user = models.User.query.filter_by(username=username, password=password).first()
     return user
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'username' in session:
+        return 'Already logged in'
+
     if request.method == 'POST':
-        return jsonify(request.get_json(force=True))
-        # json_string = '{"employees":[{"firstName":"John", "lastName":"Doe"},{"firstName":"Anna", "lastName":"Smith"},{"firstName":"Peter", "lastName":"Jones"}]}'
-        # aa = json.JSONEncoder().encode(json_string) => to python obj
-        # aa = json.loads(json_string) => to python obj
+        user = validate(request.form['username'], request.form['password'])
 
-        # data = {"id": str(album.id), "title": album.title}
-        # json.dumps(data)
+        if user is not None:
+            session['username'] = str(escape(request.form['username']))
+            session['password'] = str(escape(request.form['password']))
+            session['user_id'] = user.id
 
-        # session['username'] = request.form['username']
-        # session['password'] = request.form['password']
-        # return redirect(url_for('index'))
-
-
-        # v = validate_func( jsonify(request.form))
-        # if v == True
-        #   return redirect(url_for('index')
+            return redirect(url_for('post_crate'))
 
     return render_template('login.html')
 
@@ -113,3 +117,20 @@ app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+    # json_string = '{"employees":[{"firstName":"John", "lastName":"Doe"},{"firstName":"Anna", "lastName":"Smith"},{"firstName":"Peter", "lastName":"Jones"}]}'
+    # aa = json.JSONEncoder().encode(json_string) => to python obj
+    # aa = json.loads(json_string) => to python obj
+
+    # data = {"id": str(album.id), "title": album.title}
+    # json.dumps(data)
+
+    # session['username'] = request.form['username']
+    # session['password'] = request.form['password']
+    # return redirect(url_for('index'))
+
+
+    # v = validate_func( jsonify(request.form))
+    # if v == True
+    #   return redirect(url_for('index')

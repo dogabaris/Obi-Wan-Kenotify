@@ -22,11 +22,12 @@ class Tag(db.Model):
     posts = db.relationship('Post', secondary='tag_post_link')
 
 
+45
 class Post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.Integer, db.ForeignKey('user.id'))
-    title = db.Column(db.String(100), )
+    title = db.Column(db.String(100))
     created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
     content = db.Column(db.Text)
     tags = db.relationship(Tag, secondary='tag_post_link')
