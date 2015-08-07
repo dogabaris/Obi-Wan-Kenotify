@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify, flash
+from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 import json as pyjson
 import os
@@ -7,13 +7,12 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config["JSON_SORT_KEYS"] = False
+app.config["JSON_SORT_KEYS"] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
 
 db = SQLAlchemy(app)
 
 import models
-
 
 @app.route('/')
 def index():
@@ -23,22 +22,12 @@ def index():
     return 'You are not logged in'
 
 
-@app.route('/post/create', methods=['GET', 'POST'])
-def post_crate():
-    if 'username' in session:
-        if request.method == 'POST':
-            # TODO: validate data
+@app.route('/aq', methods=['POST'])
+def aq():
+    request_string = request.get_json(force=True)
+    data = {"username": str(escape(request_string['username'])), "password": str(escape(request_string['password']))}
 
-            data = {'author_id': session['user_id'],
-                    'title': str(escape(request.form['title'])),
-                    'tags': escape(request.form['tag']),
-                    'content': escape(request.form['body'])
-                    }
-            return jsonify(data)
-
-        return render_template('createpost.html')
-    else:
-        return 'NOT LOGGED IN'
+    return pyjson.dumps(data)
 
 
 @app.route('/json', methods=['POST'])
@@ -59,6 +48,14 @@ def jst():
     return render_template('jst.html')
 
 
+#   testing json methods
+# @app.route('/test', methods=['POST'])
+# def test():
+#     #json_string = json.dump(request.form)
+#
+#     return jsonify(**json.loads(json.htmlsafe_dump(json.loads(request.data))))
+#     #return "%(username)s  %(password)s" % request.form
+
 @app.route('/loginjson', methods=['GET', 'POST'])
 def loginjson():
     if request.method == 'POST':
@@ -67,17 +64,11 @@ def loginjson():
         credentials['username'] = str(escape(credentials['username']))  # lemme escape 'em first
         credentials['password'] = str(escape(credentials['password']))  # and let there be string, god said
 
-        user = validate(credentials['username'], credentials['password'])
-
-        if user is not None:
+        if validate(credentials['username'], credentials['password']) != None:  # just kiddin'
             session['username'] = credentials['username']
             session['password'] = credentials['password']
-            session['user_id'] = user.id
 
-            data = {"username": str(escape(session['username'])), "password": str(escape(session['password']))}
-
-            return jsonify(data)
-
+            return redirect(url_for(('index')))
 
     return 'not logged in'
 
@@ -87,20 +78,26 @@ def validate(username, password):
     return user
 
 
+#
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'username' in session:
-        return 'Already logged in'
-
     if request.method == 'POST':
-        user = validate(request.form['username'], request.form['password'])
+        return jsonify(request.get_json(force=True))
+        # json_string = '{"employees":[{"firstName":"John", "lastName":"Doe"},{"firstName":"Anna", "lastName":"Smith"},{"firstName":"Peter", "lastName":"Jones"}]}'
+        # aa = json.JSONEncoder().encode(json_string) => to python obj
+        # aa = json.loads(json_string) => to python obj
 
-        if user is not None:
-            session['username'] = str(escape(request.form['username']))
-            session['password'] = str(escape(request.form['password']))
-            session['user_id'] = user.id
+        # data = {"id": str(album.id), "title": album.title}
+        # json.dumps(data)
 
-            return redirect(url_for('post_crate'))
+        # session['username'] = request.form['username']
+        # session['password'] = request.form['password']
+        # return redirect(url_for('index'))
+
+
+        # v = validate_func( jsonify(request.form))
+        # if v == True
+        #   return redirect(url_for('index')
 
     return render_template('login.html')
 
@@ -117,20 +114,3 @@ app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-    # json_string = '{"employees":[{"firstName":"John", "lastName":"Doe"},{"firstName":"Anna", "lastName":"Smith"},{"firstName":"Peter", "lastName":"Jones"}]}'
-    # aa = json.JSONEncoder().encode(json_string) => to python obj
-    # aa = json.loads(json_string) => to python obj
-
-    # data = {"id": str(album.id), "title": album.title}
-    # json.dumps(data)
-
-    # session['username'] = request.form['username']
-    # session['password'] = request.form['password']
-    # return redirect(url_for('index'))
-
-
-    # v = validate_func( jsonify(request.form))
-    # if v == True
-    #   return redirect(url_for('index')

@@ -19,10 +19,10 @@ class Tag(db.Model):
     __tablename__ = 'tag'
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(50))
-    posts = db.relationship('Post', secondary='tag_post_link')
+    post = db.Column(db.Integer, db.ForeignKey('post.id'))
+    # posts = db.relationship('Post', secondary='tag_post_link')
 
 
-45
 class Post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
@@ -30,20 +30,21 @@ class Post(db.Model):
     title = db.Column(db.String(100))
     created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp(), nullable=False)
     content = db.Column(db.Text)
-    tags = db.relationship(Tag, secondary='tag_post_link')
+    tags = db.relationship('Tag', backref='post')
+
+    #tags = db.relationship(Tag, secondary='tag_post_link')
 
     def __init__(self, author, title, content):
         self.author = author
         self.title = title
         self.content = content
 
-
-class TagPostLink(db.Model):
-    __tablename__ = 'tag_post_link'
-    tag_id = db.Column(db.Integer, db.ForeignKey('tag.id'), primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), primary_key=True)
-    tag = db.relationship(Tag, backref=db.backref('post_assoc'))
-    post = db.relationship(Post, backref=db.backref('post_assoc'))
+# class TagPostLink(db.Model):
+#     __tablename__ = 'tag_post_link'
+#     tag_id = db.Column(db.Integer, db.ForeignKey('tag.id'), primary_key=True)
+#     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), primary_key=True)
+#     tag = db.relationship(Tag, backref=db.backref('post_assoc'))
+#     post = db.relationship(Post, backref=db.backref('post_assoc'))
 
 # AI = models.Tag.query.filter_by(label='AI').all()
 # for tag in tags:
