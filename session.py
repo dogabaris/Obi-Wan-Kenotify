@@ -3,14 +3,21 @@ from flask import Flask, session, redirect, url_for, escape, request, render_tem
 from flask.ext.sqlalchemy import SQLAlchemy
 import json as pyjson
 import os
+from flask_orator import Orator
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
+app.config['ORATOR_DATABASES'] = {
+    'development': {
+        'driver': 'sqlite',
+        'database': 'orator.db'
+    }
+}
 
-db = SQLAlchemy(app)
+db = Orator(app)
+
 
 import models
 
