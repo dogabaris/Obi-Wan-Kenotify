@@ -23,15 +23,3 @@ class Post(db.Model):
 
     def __repr__(self):
         return '<Post title %r>' % self.title
-
-
-class Tag(db.Model):
-    __fillable__ = ['label', ]
-
-    @property
-    def post(self):
-        return self.has_many('posts')
-
-    @property
-    def user(self):
-        return self.belongs_to('users')
