@@ -7,11 +7,6 @@ class User(db.Model):
     def posts(self):
         return self.has_many('posts')
 
-    @property
-    def tags(self):
-        return self.has_many('tags')
-
-
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -23,7 +18,6 @@ class Post(db.Model):
     def user(self):
         return self.belongs_to('users')
 
-    @property
     def tag(self):
         return self.belongs_to('tags')
 

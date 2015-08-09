@@ -12,7 +12,7 @@ app.config["JSON_SORT_KEYS"] = True
 app.config['ORATOR_DATABASES'] = {
     'development': {
         'driver': 'sqlite',
-        'database': 'orator.db'
+        'database': 'orator-models-branch.db'
     }
 }
 
