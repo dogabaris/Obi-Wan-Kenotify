@@ -14,6 +14,9 @@ class CreatePostsTable(Migration):
             table.integer('author')
             table.timestamps()
 
+            table.foreign('author').references('id').on('users')
+            table.foreign('tag_id').references('id').on('tags')
+
     def down(self):
         """
         Revert the migrations.

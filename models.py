@@ -15,7 +15,7 @@ class Post(db.Model):
     __fillable__ = ['title', 'content', 'author', 'tag_id']
 
     @property
-    def author(self):
+    def get_author(self):
         return self.belongs_to('users')
 
     @property
