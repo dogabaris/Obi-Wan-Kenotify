@@ -11,6 +11,7 @@ class CreatePostsTable(Migration):
             table.integer('tag_id')
             table.string('title', 100)
             table.text('content')
+            table.integer('author')
             table.timestamps()
 
     def down(self):
