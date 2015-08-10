@@ -15,11 +15,11 @@ app.config['ORATOR_DATABASES'] = {
         'database': 'orator-models-branch.db'
     }
 }
-
+import models
 db = Orator(app)
 
 
-import models
+
 
 @app.route('/')
 def index():
@@ -80,12 +80,11 @@ def loginjson():
     return 'not logged in'
 
 
-def validate(username, password):
-    user = models.User.query.filter_by(username=username, password=password).first()
+def validate(u, p):
+    user = models.User.where('username', u).first()
     return user
 
 
-#
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
