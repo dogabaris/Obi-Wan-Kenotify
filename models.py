@@ -12,10 +12,10 @@ class User(db.Model):
 
 
 class Post(db.Model):
-    __fillable__ = ['title', 'content', 'author', 'tag_id']
+    __fillable__ = ['title', 'content', 'user_id', 'tag_id']
 
     @property
-    def get_author(self):
+    def user(self):
         return self.belongs_to('users')
 
     @property
@@ -23,7 +23,7 @@ class Post(db.Model):
         return self.belongs_to('tags')
 
     def __repr__(self):
-        return '<Post title %r, tag %r>' % self.title, self.tag
+        return '<Post title %r>' % self.title
 
 
 class Tag(db.Model):
