@@ -15,7 +15,7 @@ app.config['ORATOR_DATABASES'] = {
         'database': 'orator-models-branch.db'
     }
 }
-import models
+# import models
 db = Orator(app)
 
 
