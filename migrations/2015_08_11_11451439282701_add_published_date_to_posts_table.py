@@ -7,7 +7,7 @@ class AddPublishedDateToPostsTable(Migration):
         Run the migrations.
         """
         with self.schema.table('posts') as table:
-            table.timestamp('published_at').nullable()  # Cannot add a NOT NULL column with default value NULL
+            table.timestamp('published_at').default(0)  # Cannot add a NOT NULL column with default value NULL
 
     def down(self):
         """

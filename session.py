@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify
-from flask.ext.sqlalchemy import SQLAlchemy
 import json as pyjson
 import os
 from flask_orator import Orator
+from datetime import datetime
+from dateutil import parser
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -15,7 +16,7 @@ app.config['ORATOR_DATABASES'] = {
         'database': 'orator-models-branch.db'
     }
 }
-# import models
+import models
 db = Orator(app)
 
 
@@ -39,19 +40,27 @@ def create():
 
     tag_id = models.Tag.where('name', post['tag']).first().id
     user_id = models.User.where('username', post['username']).first().id
+    published_at = parser.parse(post['published_at'])
+
     new_post = models.Post.create(
         title=post['title'],
         content=post['announcement'],
         user_id=user_id,
-        tag_id=tag_id
+        tag_id=tag_id,
+        published_at=published_at
     )
 
     if new_post is not None:
-        response = models.Post.where('title', post['title']).where('tag_id', tag_id).first()
+        response = models.Post \
+            .where('title', post['title']) \
+            .where('tag_id', tag_id) \
+            .where('user_id', user_id).first()
+
         response_dict = {'username': response.user.username,
                          'title': response.title,
                          'tag': response.tag.name,
-                         'announcement': response.content
+                         'announcement': response.content,
+                         'published_at': response.published_at
                          }
         return jsonify(response_dict)
 

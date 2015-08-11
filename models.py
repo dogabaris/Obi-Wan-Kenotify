@@ -12,7 +12,7 @@ class User(db.Model):
 
 
 class Post(db.Model):
-    __fillable__ = ['title', 'content', 'user_id', 'tag_id']
+    __fillable__ = ['title', 'content', 'user_id', 'tag_id', 'published_at']
 
     @property
     def user(self):
