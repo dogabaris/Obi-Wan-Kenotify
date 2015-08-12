@@ -9,19 +9,21 @@
 
 {
 
-    "username":"doga",
-    "password":"doga",
-    "id":1,
-    "roles":[
-        {
-            "name":"AI",
-            "id":1
-        },
-        {
-            "name":"admin",
-            "id":3
-        }
-    ]
+    "Profile":{
+        "id":1,
+        "password":"doga",
+        "roles":[
+            {
+                "id":1,
+                "name":"AI"
+            },
+            {
+                "id":3,
+                "name":"admin"
+            }
+        ],
+        "username":"doga"
+    }
 
 }
 
