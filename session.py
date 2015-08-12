@@ -2,6 +2,7 @@
 from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify
 import json as pyjson
 import os
+from flask.json import jsonify
 from flask_orator import Orator
 from datetime import datetime
 from dateutil import parser
@@ -16,14 +17,17 @@ app.config['ORATOR_DATABASES'] = {
         'database': 'orator-models-branch.db'
     }
 }
+
 import models
+
 db = Orator(app)
 
 
 @app.route('/q')
 def q():
-    data = models.User.all().to_dict()
-    return str(data)
+    data = models.Post.where('id', 1).first().test()
+    return jsonify(results=data)
+
 
 @app.route('/')
 def index():
@@ -54,17 +58,17 @@ def create():
         response = models.Post \
             .where('title', post['title']) \
             .where('tag_id', tag_id) \
-            .where('user_id', user_id).first()
+            .where('user_id', user_id).first().to_dict()
 
-        response_dict = {'username': response.user.username,
-                         'title': response.title,
-                         'tag': response.tag.name,
-                         'announcement': response.content,
-                         'published_at': response.published_at
-                         }
-        return jsonify(response_dict)
+        return jsonify(results=models.Post.take(3).get().to_dict())
 
-
+        # response_dict = {'username': response.user.username,
+        #                   'title': response.title,
+        #                   'tag': response.tag.name,
+        #                   'announcement': response.content,
+        #                   'published_at': response.published_at
+        #                   }
+        # return jsonify(response_dict)
 
 
 @app.route('/aq', methods=['POST'])
@@ -110,16 +114,17 @@ def loginjson():
         credentials['password'] = str(escape(credentials['password']))  # and let there be string, god said
 
         user = validate(credentials['username'], credentials['password'])
-        if user != None:  # just kiddin'
+        if user is not None:  # just kiddin'
             session['username'] = credentials['username']
             session['password'] = credentials['password']
             session['user_id'] = user.id
 
-            data = {"username": str(escape(session['username'])), "user_id": user.id,
-                    "password": str(escape(session['password']))}
+            # data = {"username": str(escape(session['username'])), "user_id": user.id,
+            # "password": str(escape(session['password']))}
 
-            return jsonify(data)
 
+
+            return jsonify(Profile=user.to_dict())
 
     return 'not logged in'
 
