@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify
+from flask import Flask, session, redirect, url_for, escape, request, render_template, jsonify, abort
 import json as pyjson
 import os
 from flask.json import jsonify
@@ -23,6 +23,29 @@ import models
 db = Orator(app)
 
 
+@app.errorhandler(400)
+def bad_request(error):
+    response = jsonify({'status_code': 400,
+                        'message': error.description})
+    response.status_code = 400
+    return response
+
+
+@app.errorhandler(403)
+def forbidden(error):
+    response = jsonify({'status_code': 403,
+                        'message': error.description})
+    response.status_code = 403
+    return response
+
+
+@app.errorhandler(404)
+def forbidden(error):
+    response = jsonify({'status_code': 404,
+                        'message': error.description})
+    response.status_code = 404
+    return response
+
 @app.route('/q')
 def q():
     data = models.Post.where('id', 1).first().test()
@@ -40,70 +63,55 @@ def index():
 # {"username":"aa", "title":"bbb", "tag":"dskalda", "announcement":"dskaldaks", "date":"dsjkaldsa"}
 @app.route('/create', methods=['POST'])
 def create():
+    #   session control, role control, sessiondan userı al, gelenle kontrol et
+    expected_key_list = ['username',
+                         'title',
+                         'tag',
+                         'announcement',
+                         'published_at']
     post = request.get_json(force=True)
 
-    tag_id = models.Tag.where('name', post['tag']).first().id
-    user_id = models.User.where('username', post['username']).first().id
-    published_at = parser.parse(post['published_at'])
+    if ('username' in session) and (session['username'] == post['username']):
 
-    new_post = models.Post.create(
-        title=post['title'],
-        content=post['announcement'],
-        user_id=user_id,
-        tag_id=tag_id,
-        published_at=published_at
-    )
+        if sorted(expected_key_list) != sorted(post.keys()):
+            abort(400, 'Invalid request.')
 
-    if new_post is not None:
-        response = models.Post \
-            .where('title', post['title']) \
-            .where('tag_id', tag_id) \
-            .where('user_id', user_id).first().to_dict()
+        tag = models.Tag.where('name', post['tag']).first()
+        if tag is None:
+            abort(404, 'Tag can\'t found')
 
-        return jsonify(results=models.Post.take(3).get().to_dict())
+        # validate if user have this role
+        if check_role(session['roles'], tag) is not True:
+            abort(403, 'You do not have permission for this tag.')
 
-        # response_dict = {'username': response.user.username,
-        #                   'title': response.title,
-        #                   'tag': response.tag.name,
-        #                   'announcement': response.content,
-        #                   'published_at': response.published_at
-        #                   }
-        # return jsonify(response_dict)
+        user = models.User.where('id', session['user_id']).first()
+        published_at = post['published_at']  # parser.parse()
 
+        new_post = user.posts().create(
+            title=post['title'],
+            content=post['announcement'],
+            tag_id=tag.id,
+            published_at=published_at
+        )
 
-@app.route('/aq', methods=['POST'])
-def aq():
-    request_string = request.get_json(force=True)
-    data = {"username": str(escape(request_string['username'])), "password": str(escape(request_string['password']))}
+        new_post.user()
+        new_post.tag()
+        if new_post is not None:
+            response = jsonify(Post=new_post.to_dict())
+            response.status_code = 201
+            return response
 
-    return pyjson.dumps(data)
+    else:
+        return abort(403, 'You need to login to create a post.')
 
 
-@app.route('/json', methods=['POST'])
-def json():
-    request_string = request.get_json(force=True)
-    data = {"username": str(escape(request_string['username'])), "password": str(escape(request_string['password']))}
+def check_role(roles_list, r):
+    for role in roles_list:
+        if role['name'] == r.name:
+            return True
 
-    return jsonify(data)
+    return False
 
-
-#   Escapes data
-@app.route('/jst', methods=['GET', 'POST'])
-def jst():
-    if request.method == 'POST':
-        data = {"username": escape(request.form['username']), "password": escape(request.form['password'])}
-        return jsonify(data)
-
-    return render_template('jst.html')
-
-
-#   testing json methods
-# @app.route('/test', methods=['POST'])
-# def test():
-#     #json_string = json.dump(request.form)
-#
-#     return jsonify(**json.loads(json.htmlsafe_dump(json.loads(request.data))))
-#     #return "%(username)s  %(password)s" % request.form
 
 @app.route('/loginjson', methods=['GET', 'POST'])
 def loginjson():
@@ -114,16 +122,18 @@ def loginjson():
         credentials['password'] = str(escape(credentials['password']))  # and let there be string, god said
 
         user = validate(credentials['username'], credentials['password'])
-        if user is not None:  # just kiddin'
+        if user is not None:
+            user.roles()  # Load roles
             session['username'] = credentials['username']
             session['password'] = credentials['password']
             session['user_id'] = user.id
+            session['roles'] = user.roles.to_dict()  # session['roles'][0]['name']
 
             # data = {"username": str(escape(session['username'])), "user_id": user.id,
             # "password": str(escape(session['password']))}
 
 
-            user.roles()  # Load roles
+
             return jsonify(Profile=user.to_dict())
 
     return 'not logged in'
@@ -132,30 +142,6 @@ def loginjson():
 def validate(u, p):
     user = models.User.where('username', u).where('password', p).first()
     return user
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        return jsonify(request.get_json(force=True))
-        # json_string = '{"employees":[{"firstName":"John", "lastName":"Doe"},{"firstName":"Anna", "lastName":"Smith"},{"firstName":"Peter", "lastName":"Jones"}]}'
-        # aa = json.JSONEncoder().encode(json_string) =>
-        # aa = json.loads(json_string) => to python obj
-
-        # data = {"id": str(album.id), "title": album.title}
-        # json.dumps(data)
-
-        # session['username'] = request.form['username']
-        # session['password'] = request.form['password']
-        # return redirect(url_for('index'))
-
-
-        # v = validate_func( jsonify(request.form))
-        # if v == True
-        #   return redirect(url_for('index')
-
-    return render_template('login.html')
-
 
 @app.route('/logout')
 def logout():

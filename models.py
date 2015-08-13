@@ -2,7 +2,7 @@ from session import db
 
 class User(db.Model):
     __fillable__ = ['username', 'password']
-    __hidden__ = ['created_at', 'updated_at']
+    __hidden__ = ['created_at', 'updated_at', 'password']
 
     @property
     def posts(self):
@@ -18,7 +18,7 @@ class User(db.Model):
 
 class Post(db.Model):
     __fillable__ = ['title', 'content', 'user_id', 'tag_id', 'published_at']
-    __hidden__ = ['created_at', 'updated_at']
+    __hidden__ = ['created_at', 'updated_at', 'user_id', 'tag_id']
 
     @property
     def user(self):

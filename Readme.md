@@ -35,12 +35,18 @@
 {
 
     "Post":{
-        "content":"qqq",
-        "id":19,
-        "published_at":"2015-08-15 15:00:00",
-        "tag_id":1,
-        "title":"qqqqqqq",
-        "user_id":1
+        "content":"Response Test Content",
+        "id":56,
+        "published_at":"26.08.2015 15:00",
+        "tag":{
+            "id":1,
+            "name":"AI"
+        },
+        "title":"Response Test",
+        "user":{
+            "id":1,
+            "username":"doga"
+        }
     }
 
 }
