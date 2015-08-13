@@ -123,7 +123,7 @@ def loginjson():
             # "password": str(escape(session['password']))}
 
 
-
+            user.roles()  # Load roles
             return jsonify(Profile=user.to_dict())
 
     return 'not logged in'
